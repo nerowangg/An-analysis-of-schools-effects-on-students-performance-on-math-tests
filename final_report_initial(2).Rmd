@@ -1,0 +1,77 @@
+---
+title: "An analysis of schools' effects on students' performance on math tests"
+author: 'ZIJIAN WANG 1002300770'
+date: "Dec 16, 2020"
+abstract: |
+  |   This study aims to study factors that affect performance on math tests for school students. To study the questions of interest, the study applied bayes models to investigate the effects on performance on math tests. It was found the random effects of schools are more important affecting the performances, so it suggests it is more important to give poorly math tests performing schools more funding to help them improve their education level rather than give teachers more training or invidual students more attention.
+
+  |
+  | **Keywords:**  Math performance; Bayes Model; School random effects;
+output:
+  bookdown::pdf_document2:
+toc: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,eval=TRUE, warning=F,message=F)
+```
+
+# Introduction
+
+This study is aimed to study factors that affect performance on math tests for school students. Lots of former study already shows that the performance on math tests for school students could be affected by lots of factors including Social Class, the grade of student, schools, family income, parents' eductions and so on. It is interested to investigate what are the most important influences on student performance such as performance on the math test.  For example, it is meaningful to find out whether identifying poorly performing schools would be more important than find out individual class rooms which perform poorly or whether it is more important to directly found out students who are weak. Because based on different results, different plans could be made to improve the performances, for examples, if finding out weak students is more important, then we can give them extra attention in classes but if individual class rooms are more important, then we can give teachers related with the classes more training, at last, if some schools are turned out to be more important, we can give the schools more funding to help them improve their education performance.
+ 
+
+# Data
+
+The data source comes from  the school's leaver data which could be found in the URL https://www.educationcounts.govt.nz/data-services/national/school_leavers,  however, a simpler version of was used in this study.
+
+
+# Model 
+
+The model used in this study is a Generalized Linear Mixed Model (Poisson distribution) with a bayesian analysis.
+
+
+$$Y_{ij}  \overset{\text{ind}}{\sim} \text{Poisson}(\lambda_{ij})$$
+
+$$log(\lambda_{ij}) = \mu + X_{ijk} \beta + A_i + B_{ij}$$
+
+$$A_i \overset{\text{ind}}{\sim} N(0, \sigma_A^2)$$
+$$B_{ij} \overset{\text{ind}}{\sim} N(0, \sigma_B^2)$$
+
+The priors are,
+
+$$\frac{1}{\sigma_A^2} \sim Gamma(1,0.01)$$
+
+
+$$\frac{1}{\sigma_B^2} \sim Gamma(1,0.01)$$
+
+And $Y_{ij}$ is  math performance, $X_{ij}$ are covariates,  $A_i$ is  random effect for ith school and $C_{ij}$ is  random effect for  jth class in ith school.
+ 
+
+
+
+# Results
+
+
+The results show  grade and social class have significant influences on  math performances. 
+
+The results also  show the random effects SD for schools are larger than that for classes, which means schools' variation are more important. 
+
+It suggests to invest more on poorly performanced schools overall rather than train poor classes such as train teachers of those classes due the findings.
+
+To be continuted.
+
+# Discussion
+
+
+# References
+
+
+# Appendix R codes
+
+
+
+
+
+
+
