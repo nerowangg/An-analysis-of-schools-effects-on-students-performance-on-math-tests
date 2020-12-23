@@ -1,0 +1,212 @@
+---
+title: "Pay extra attention in classes on weak students is more important than training teachers or invest more on schools"
+author: 'ZIJIAN WANG 1002300770'
+date: "Dec 21, 2020"
+abstract: |
+  |   This study aims to study the most appropriate way to improve students' performances on math scores. To study the questions of interest, the study applied bayes analysis with GLMM model with poisson family. It was found the random effects of students is more important than schools and classes.  This study suggests to pay more attention on weak students in classes rather than training teachers of poor performed classes or invest more on poor performed schools.
+
+  |
+  | **Keywords:**  Math performance; Bayes Model; Mixed effects Model;
+output:
+  bookdown::pdf_document2:
+toc: FALSE
+linestretch: 1.5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,eval=TRUE, warning=F,message=F,fig.height = 3.8)
+```
+
+# Introduction
+
+This study is aimed to study factors that affect performance on math tests for school students and find out the most appropriate way to improve students' performances on math scores. Lots of former study already shows that the performance on math tests for school students could be affected by lots of factors including Social Class, the grade of student, schools, family income, parents' eductions and so on. And in today's era of knowledge economy, mathematics is moving from the background to the front, promoting the development of social productive forces. As an important subject to measure one's ability, most students from primary school to high school have a special reason to learn well the math, they should have invested a lot of time and energy in it 
+as math is relatively more difficult than english, arts and so on.
+
+And it is known that not all of students are successful in performing well on math, some of them even perform very bad such as got 0 marks in math tests. We know school students' math scores are influenced by many factors, such as talent, hard work, family status, and parents' education. Some teachers with several years of teaching practice have been exploring, accumulating experience, and summarizing rules. That the main  factors that affect the math performance of school students into two categories: internal factors and external factors. For students from the same region, learning environment is basically similar, but differ in thousands ways of personal internal factors, internal factors and external factors will  work together.
+
+Compared with find which factors affect math test scores, it is more important to find ways to improve poor students on the math tests, so under this background. We are not only interested to investigate what are the most important influences on student performance such as the performance on the math test but also interested in how to improve the poor performances. 
+
+With the goal of the study, it is meaningful to find out whether identifying poorly performing schools would be more important than find out individual class rooms which perform poorly or whether it is more important to directly found out students who are weak. Because based on different results, different plans could be made to improve the performances, for examples, if finding out weak students is more important, then we can give them extra attention in classes but if individual class rooms are more important, then we can give teachers related with the classes more training, at last, if some schools are turned out to be more important, we can give the schools more funding to help them improve their education performance.
+
+
+Finally, the study is organized as follows: first, introduction is given and then data and models are described, next, results are given followed by discussions and conclusions. The GitHub Repo link: https://github.com/nerowangg/An-analysis-of-schools-effects-on-students-performance-on-math-tests.
+
+# Data
+
+
+The data source comes from  the school's leaver data which could be found in the URL https://www.educationcounts.govt.nz/data-services/national/school_leavers where we can also find details of information of the raw data. And however, a simpler version of was used in this study which could be found in the http://www.bristol.ac.uk/cmm/ which is in individual student level of math score performance.
+
+The data is collected by the Ministry with the goals that to assess the performance of schools and to monitor the New Zealand education system, and the goal also includes national wide reporting and support for policy analysis.
+
+However, the data is not collected by a survey but more like a census, the students who have finished their schooling would be indentified using the ENROL system which is a national register of student enrolments. And all of schools are forced to use the ENROL system,  and the systemt could let schools unpdate enrolments themselves as well as information of stuents if they change schools or drop or leave the ENROL school system.
+
+Also, as the school leavers are identified using ENROL, some of students might be included while others might not included which means there are Inclusive and exclusive criterias for this data set. For examples, the exchange students and international fee-paying students are exclusive in this data set. However, as the sysmste is operated different among different schools, the enrolling schools are responsible for ensuring the students are recorded correctly, so there is an issue of different measures among different schools, however, this might affect our study little as the results should be very close among schools in recording information of students.  As the data is a census including all of students, the target population is the entire population of students, if some schools are not recorded or recorded incorrectly, all of these could bring us biasness.
+
+
+
+# Model 
+
+The model used in this study is a Generalized Linear Mixed Model (Poisson distribution) with a bayesian analysis. This model is choosen as the response math score is ranged from 0 to 40 which is like a county data and positive. And mixed effects model is used as we want to investigate which random effect is most important, so we need to specify three random effects which are random effects of the 3 different levels: schools, classes and students respectively. So combine the goals, GLMM with poisson family is most appropriate, also, bayesian analysis is used as we have lots of experience in determining the standard devations of the above 3 levels of random effects compared with non-informative priors. 
+
+The model used has the folloing form:
+
+
+$$Y_{ijk}  \overset{\text{ind}}{\sim} \text{Poisson}(\lambda_{ijk})$$
+
+$$log(\lambda_{ijk}) = \mu + X_{ijk} \beta + SCHOOL_i + CLASS_{ij} + STUDENT_{ijk}$$
+
+And $Y_{ij}$ is  the math performance test score,  $X_{ijk}$ are covariates including grade, gender and scocial classes of students, at last, $SCHOOL_i , CLASS_{ij}, STUDENT_{ijk}$ are random effects for the 3 levels data respectively. And for each of them, we assume the distributions are:
+ 
+
+
+$$X \sim N(0, \sigma_X^2)$$
+where X is each of the 3 random effects. The priors are,
+
+
+$$\frac{1}{\sigma_X^2} \sim Gamma(1,0.01)$$
+where X is each of the 3 random effects. Also, note, this is an inverse gamma distribution which is widely used in estimation inverse of variance and it is sometimes called precision.
+
+
+
+# Results
+  
+````{r}
+library(Pmisc)
+library(ggplot2)
+library(dplyr)
+library(ggthemes)
+library(INLA)
+library(knitr)
+dir.create(file.path("..", "data"), showWarnings = F)
+downloadIfOld("http://www.bristol.ac.uk/cmm/media/migrated/jsp.zip", file.path("..", "data"))
+colnames2 <- c("school", "class", "gender", "socialClass", "ravensTest","student", "english", "math", "year")
+labels <- c("I","II", "IIIn", "IIIm", "IV", "V", "longUnemp", "currUnemp","absent")
+
+widths <- c(2,1, 1, 1, 2, 4, 2, 2, 1)
+school = read.fwf("../data/JSP.DAT", widths = widths, col.names = colnames2)
+school <- school %>% mutate(
+socialClass = factor(socialClass, labels = labels),
+gender = factor(gender, labels = c("f", "m")),
+classUnique = paste(school, class),
+studentUnique = paste(school, class, student),
+grade = factor(year))
+
+```
+
+```{r, fig.cap="Distribution of math score for all students in the sample"}
+ggplot(school, aes(math)) + geom_histogram(fill = "indianred", bins = 20) + theme_gdocs() + 
+  labs(title = "histogram of math score")
+```
+
+Figure 1 shows the distribution of math score for all students in the sample, it can be observed the distribution is clearly left-skewed that most of students have math scores higher than 20, the peak is around 30. also the spread of all students is between 0-40 that there are students with very low math scores which are close to 0s as well as there are students almost got full 40 marks.
+
+
+```{r, fig.cap="Distribution of math score for all students in the sample grouped by gender"}
+ggplot(school, aes(math, fill = gender)) + geom_histogram(bins = 20) + theme_gdocs() + 
+  labs(title = "histogram of math score grouped by gender")
+```
+
+Figure 2 shows the distribution of math score for all students in the sample grouped by gender, it can be observed the distributions are clearly left-skewed for both gender, the peak of female is much higher than that of male.
+
+```{r, fig.cap="Distribution of math score for all students in the sample grouped by social classes"}
+ggplot(school, aes(math, fill = socialClass)) + geom_histogram(bins = 20) + theme_gdocs() + 
+  labs(title = "histogram of math score grouped by social classes")
+```
+
+Figure 3 shows the distribution of math score for all students in the sample grouped by social classes and it can be observed the distributions are clearly left-skewed for all of social classes, and it seems the peak of social class I has a highest peak white other social classes such as IV, V have much lower peaks.
+
+```{r, fig.cap="Distribution of math score for all students in the sample grouped by grades"}
+school %>% mutate(grade = factor(grade)) %>% ggplot(aes(math, fill = grade)) + geom_histogram(bins = 20) + theme_gdocs() + 
+  labs(title = "histogram of math score grouped by grades")
+```
+
+Figure 4 shows the distribution of math score for all students in the sample grouped by grades and it can be observed the distributions are clearly left-skewed for all of grades, and for grade 2, the distribution is most seriously left-skewed, and grade 0 has a highest peak while grade 1 is in the middle.
+
+
+
+```{r}
+model = inla(math ~ gender + socialClass + 
+grade + f(school, model = "iid",
+          hyper=list(theta=list(prior="loggamma", param=c(1,10^{-2})))) + 
+  f(classUnique, model = "iid",
+    hyper=list(theta=list(prior="loggamma",
+                          param=c(1,10^{-2})))) + 
+  f(studentUnique, model = "iid", 
+    hyper=list(theta=list(prior="loggamma", 
+                          param=c(1,10^{-2})))),
+control.fixed=list(
+ mean.intercept=0,prec.intercept=1/5^2,
+ mean=0, prec=1/10^2),
+control.compute = list(return.marginals=TRUE),
+data = school,
+family = "poisson")
+kable(model$summary.fixed[,c(1,2,3,5)],digits = 2,
+             caption = "Fixed effects")
+sdTable = 1/sqrt(model$summary.hyper)
+sdTable = sdTable[,c(1,2,3,5)]
+row.names(sdTable) <- c("SD of school random effect","SD of class random effect",
+                        "SD of student random effect")
+knitr::kable(sdTable, digits = 2,caption = "SDs for random effects")
+
+knitr::kable(model$summary.random$school[1:6, c(1,2,3,5)], digits = 2,
+             caption = "Random effects of schools")
+knitr::kable(model$summary.random$classUnique [1:6, c(1,2,3,5)], digits = 2,
+             caption = "Random effects of classes")
+knitr::kable(model$summary.random$studentUnique [1:6, c(1,2,3,5)], digits = 2,
+             caption = "Random effects of students")
+```
+
+
+Table 1 shows the fixed effects of the covariates on the response. Table 2 shows the standard deviations of random effects for schools, classes and students. Tables 3-5 shows some details of random effects estimated for schools, classes and students respectively.
+
+
+\newpage
+
+# Discussion
+
+From the fixed effects estimations in table 1, we can find the estimated effect of gender = male is negative indicating male has a lower math score in average compared with female. The grade 2 is estimated with a positive coefficient indicating grade 2 has a higher math score in average compared with grade -. For social classes, we can find different social classes have different effects on math score, but we can find the social class I has a highest math score in average. 
+
+All of the findings using the model's estimation of fixed effects show that different gender, social classes and grades indeed have some effects on math score in average. But we are more concern the results shown in the table 2 which shows standard deviations of random effects for levels of schools, classes and students.
+
+Table 2 shows that the standard deviation of random effects for level of schools is only about 0.06 in average and the standard deviation of random effects for level of classes is also only about 0.07 which is just a little higher. However, we can find the standard deviation of random effects for level of students is about 0.22 which is around 3 times of the standard deviations of random effects for levels schools and classes, this means that the random effects due to students are largest among all of the 3 random effects. Tables 3-5 show some details of random effects for all of the 3 levels respectively and we can find that the mean of random effects for each student are indeed much different with each other. 
+
+As we find the most important random effect is that among individual students given covariates gender, social class and grade. It means to improve the performances on math tests for students, the best way is to reduce the random effect of individual students rather compared with reduce random effects of schools and random effects of classes which are already very small. 
+
+To reduce the differences among students, combined with the math score distributions, it is key to improve the math scores of those poorly performed students which might got very low marks that almost close to 0s. Thus, this result indicates the differences on performances of math scores might not due to differences of education levels among schools for reasons that investments on schools might different, also, it indicates the differences are not due to differences in abilities of teachers that there are clearly poorly performed students found in same classes. So, there are no such worsely performed schools on average  math score for students as well as there are no such  worsely performed classes on average  math score for students, so that no poorly schools or classes indentified by the results.
+
+
+So it is more important to find out weak students in classes, it is clear that for two students in same class in same school, if one performed much worse than the other, it might be the reason due to the student himself/herself. And these students could be in every possible schools and classes as the distribution of math scores already shown there are almost 0 marks. After find out which students performed very bad, we can report them to related teachers of them and reminder the teachers that they should pay extra attention in classes on these reported week students such as asking them questions like "Do you understand?" when teaching in classes, or teachers can give these students extra homwork or training excercises to help them understand the lessons better. 
+
+Also, more advanced suggestions could be made if necessary to improve the students' performances, for example, Daivagna, U.M., et al (2016) suggested to use method of Quality Circle and found this is efficient to improve weak students' performance. 
+
+Given the most important contribution of the finding in this study that suggestion of givinge extra attention on poor students rather than schools and classes. There are also some weaknesses and limitations. First, this study based on an individual level data, it is known that the questionare of the survey might not be responsed leading to non-response biasness. Also, there are might be other important variables omitted such as distances to school, hours spent in study per day and so on, some of these omitted variables might be important but not included in our study, so there is a risk of omitted variable biasness. And for the model, the specification of models is key as we use poisson family to model math scores with specified priors for standard devations of random effects, if we not specified these priors appropriately, the results would not be reliable. 
+
+At last, after all of the above work, there are still lots of work needed to be done in future. For examples, we can extend our response from math scores to other scores such as english scores and so on, the results might be quite different associted with lots of new issues needed to be solved under new settings of models. Also, it might be the truth that students in same classes could affect each other, a common sense is that good students play with good ones, bad students play with bad ones, it means there might be clusters of errors, so in future work, we can consider this for our model. 
+
+
+# References
+
+1. Daivagna, U.M., Yapalaparvi, S.B., Inaamadar, D.N., & Honnagoudar, N.K. (2016). Towards improving the Performance of the Weak Students through Identification and Effective Implementation of Tasks by the Quality Circle. Journal of Engineering Education Transformations, 29.
+
+2. Hadley Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+   
+3. Hadley Wickham, Romain Fran<U+00E7>ois, Lionel Henry and Kirill Müller (2019). dplyr: A Grammar of Data
+  Manipulation. R package version 0.8.3. https://CRAN.R-project.org/package=dplyr
+  
+4. Jeffrey B. Arnold (2019). ggthemes: Extra Themes, Scales and Geoms for 'ggplot2'. R package version
+  4.2.0. https://CRAN.R-project.org/package=ggthemes
+  
+5.  Patrick Brown (2020). Pmisc: Various Utilities for knitr and inla. R package version 0.3.2/r2380.
+  https://R-Forge.R-project.org/projects/diseasemapping/
+  
+6. R Core Team (2019). R: A language and environment for statistical computing. R Foundation for
+  Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+7. Thiago G. Martins, Daniel Simpson, Finn Lindgren and Havard Rue (2013), Bayesian computing with
+  INLA: New features, Computational Statistics and Data Analysis, 67(2013) 68-83
+  
+8. Yihui Xie (2015) Dynamic Documents with R and knitr. 2nd edition. Chapman and Hall/CRC. ISBN
+  978-1498716963
+
+
+
